@@ -1,5 +1,5 @@
 from flask_restful import Resource, reqparse
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
 from backend.models import User
 from backend.app import db
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -36,7 +36,14 @@ class LoginResource(Resource):
             or_(User.name == args['identifier'], User.email == args['identifier'])
         ).first()
         if user and user.check_password(args['password']):
-            access_token = create_access_token(identity={'id': user.id, 'role': user.role, 'name': user.name, 'email': user.email})
+            access_token = create_access_token(
+                identity=str(user.id),
+                additional_claims={
+                    'role': user.role,
+                    'name': user.name,
+                    'email': user.email
+                }
+            )
             return {'access_token': access_token, 'role': user.role}, 200
         return {'message': 'Invalid credentials'}, 401
 
@@ -45,12 +52,11 @@ class ForgotPasswordResource(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('email', required=True)
         args = parser.parse_args()
-        user = User.query.filter_by(username=args['email']).first()
+        user = User.query.filter_by(email=args['email']).first()
         if not user:
             return {'message': 'Email not found'}, 404
         token = secrets.token_urlsafe(32)
         reset_tokens[token] = {'user_id': user.id, 'expires': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}
-        # Simulate sending email
         print(f"Password reset link: http://localhost:8080/reset-password?token={token}")
         return {'message': 'Password reset link sent to email (simulated)', 'token': token}, 200
 
@@ -80,8 +86,8 @@ def role_required(roles):
     def wrapper(fn):
         @jwt_required()
         def decorator(*args, **kwargs):
-            identity = get_jwt_identity()
-            if identity['role'] not in roles:
+            claims = get_jwt()
+            if claims.get('role') not in roles:
                 return {'message': 'Access denied'}, 403
             return fn(*args, **kwargs)
         return decorator

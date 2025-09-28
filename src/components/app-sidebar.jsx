@@ -1,3 +1,5 @@
+import { useLocation, useNavigate, NavLink} from "react-router-dom"
+import { useSidebar } from "@/components/ui/sidebar"
 import { useState } from "react"
 import { 
   LayoutDashboard, 
@@ -10,8 +12,6 @@ import {
   LogOut,
   User
 } from "lucide-react"
-import { NavLink, useLocation } from "react-router-dom"
-
 import {
   Sidebar,
   SidebarContent,
@@ -21,13 +21,10 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   SidebarHeader,
   SidebarFooter,
-  useSidebar,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -42,12 +39,32 @@ const navigationItems = [
 export function AppSidebar() {
   const { state } = useSidebar()
   const location = useLocation()
+  const navigate = useNavigate()
   const currentPath = location.pathname
   const isCollapsed = state === "collapsed"
 
-  const isActive = (path: string) => currentPath === path
-  const getNavCls = ({ isActive }: { isActive: boolean }) =>
+  const isActive = (path) => currentPath === path
+  const getNavCls = ({ isActive }) =>
     isActive ? "bg-primary text-primary-foreground hover:bg-primary/90" : "hover:bg-accent"
+
+  const handleLogout = async () => {
+    const token = localStorage.getItem("token")
+    if (token) {
+      try {
+        await fetch("http://localhost:5000/auth/logout", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        })
+      } catch (e) {
+        // Optionally handle error
+      }
+    }
+    localStorage.removeItem("token")
+    navigate("/login")
+  }
 
   return (
     <Sidebar collapsible="icon">
@@ -93,7 +110,7 @@ export function AppSidebar() {
               <User className="h-4 w-4" />
               <span>Admin User</span>
             </div>
-            <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => {}}>
+            <Button variant="outline" size="sm" className="w-full justify-start" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </Button>
@@ -103,7 +120,7 @@ export function AppSidebar() {
             <Button variant="ghost" size="sm" className="w-full p-2">
               <User className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" className="w-full p-2">
+            <Button variant="ghost" size="sm" className="w-full p-2" onClick={handleLogout}>
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
