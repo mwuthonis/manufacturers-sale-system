@@ -5,6 +5,7 @@ from backend.app import db
 from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
 import datetime
+from sqlalchemy import or_
 
 # In-memory token store for demo (use DB in production)
 reset_tokens = {}
@@ -17,9 +18,9 @@ class SignupResource(Resource):
         parser.add_argument('password', required=True)
         parser.add_argument('role', required=True)
         args = parser.parse_args()
-        if User.query.filter_by(username=args['email']).first():
+        if User.query.filter_by(email=args['email']).first():
             return {'message': 'Email already registered'}, 400
-        user = User(username=args['email'], role=args['role'])
+        user = User(name=args['name'], email=args['email'], role=args['role'])
         user.set_password(args['password'])
         db.session.add(user)
         db.session.commit()
@@ -28,12 +29,14 @@ class SignupResource(Resource):
 class LoginResource(Resource):
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('username', required=True)
+        parser.add_argument('identifier', required=True)
         parser.add_argument('password', required=True)
         args = parser.parse_args()
-        user = User.query.filter_by(username=args['username']).first()
+        user = User.query.filter(
+            or_(User.name == args['identifier'], User.email == args['identifier'])
+        ).first()
         if user and user.check_password(args['password']):
-            access_token = create_access_token(identity={'id': user.id, 'role': user.role, 'username': user.username})
+            access_token = create_access_token(identity={'id': user.id, 'role': user.role, 'name': user.name, 'email': user.email})
             return {'access_token': access_token, 'role': user.role}, 200
         return {'message': 'Invalid credentials'}, 401
 

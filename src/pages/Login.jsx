@@ -16,7 +16,7 @@ const Login = () => {
       return;
     }
     try {
-      const res = await axios.post("http://localhost:5000/auth/login", { username, password });
+      const res = await axios.post("http://localhost:5000/auth/login", { identifier: username, password });
       localStorage.setItem("token", res.data.access_token);
       navigate("/");
     } catch (err) {

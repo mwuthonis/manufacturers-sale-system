@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_restful import Api
+from flask_cors import CORS
 from flask_migrate import Migrate  # Fix import
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
@@ -13,6 +14,7 @@ def create_app():
     app.config['JWT_SECRET_KEY'] = 'your-secret-key'
     db.init_app(app)
     jwt.init_app(app)
+    CORS(app)
     api = Api(app)
     migrate = Migrate(app, db)  # Correct initialization
 
