@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { 
   Table,
   TableBody,
@@ -22,12 +23,137 @@ import {
   AlertTriangle
 } from "lucide-react"
 
+// --- AddStockModal component ---
+function AddStockModal({ open, onOpenChange, onAddItems }) {
+  const [items, setItems] = useState([
+    { itemName: "", category: "", unitPrice: "", quantity: "" }
+  ]);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleChange = (idx, field, value) => {
+    setItems(items =>
+      items.map((item, i) =>
+        i === idx ? { ...item, [field]: value } : item
+      )
+    );
+  };
+
+  const handleAddRow = () => {
+    setItems(items => [...items, { itemName: "", category: "", unitPrice: "", quantity: "" }]);
+  };
+
+  const handleRemoveRow = idx => {
+    setItems(items => items.filter((_, i) => i !== idx));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    // Validate (simple)
+    const valid = items.every(
+      item => item.itemName && item.category && item.unitPrice && item.quantity
+    );
+    if (!valid) {
+      setSubmitting(false);
+      return;
+    }
+    // Pass new items up
+    onAddItems(
+      items.map(item => ({
+        id: `STK${Math.floor(Math.random() * 100000)}`,
+        name: item.itemName,
+        category: item.category,
+        currentStock: Number(item.quantity),
+        minStock: 10,
+        maxStock: 1000,
+        unit: "unit",
+        unitPrice: Number(item.unitPrice),
+        supplier: "Manual Entry",
+        lastUpdated: new Date().toISOString().slice(0, 10),
+        status: "Normal"
+      }))
+    );
+    setItems([{ itemName: "", category: "", unitPrice: "", quantity: "" }]);
+    setSubmitting(false);
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Stock Items</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {items.map((item, idx) => (
+            <div key={idx} className="flex gap-2 items-end">
+              <Input
+                placeholder="Item Name"
+                value={item.itemName}
+                onChange={e => handleChange(idx, "itemName", e.target.value)}
+                className="flex-1"
+                required
+              />
+              <Input
+                placeholder="Category"
+                value={item.category}
+                onChange={e => handleChange(idx, "category", e.target.value)}
+                className="flex-1"
+                required
+              />
+              <Input
+                placeholder="Unit Price"
+                type="number"
+                min={0}
+                value={item.unitPrice}
+                onChange={e => handleChange(idx, "unitPrice", e.target.value)}
+                className="w-32"
+                required
+              />
+              <Input
+                placeholder="Quantity"
+                type="number"
+                min={1}
+                value={item.quantity}
+                onChange={e => handleChange(idx, "quantity", e.target.value)}
+                className="w-24"
+                required
+              />
+              {items.length > 1 && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  onClick={() => handleRemoveRow(idx)}
+                  className="ml-2"
+                >
+                  <Minus className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          ))}
+          <div>
+            <Button type="button" variant="outline" onClick={handleAddRow}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Another Item
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={submitting}>
+              Save Items
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+// --- End AddStockModal ---
+
 const StockManagement = () => {
   const [searchTerm, setSearchTerm] = useState("")
-
-  // Mock data for demonstration
-  const stockData = [
-    {
+  const [stockData, setStockData] = useState([
+    /*{
       id: "STK001",
       name: "Steel Pipes - 2 inch",
       category: "Raw Materials",
@@ -78,8 +204,9 @@ const StockManagement = () => {
       supplier: "Safety First Ltd",
       lastUpdated: "2024-01-13",
       status: "Normal"
-    }
-  ]
+    }*/
+  ]);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -98,6 +225,11 @@ const StockManagement = () => {
     item.id.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  // Add new items to stockData
+  const handleAddItems = (newItems) => {
+    setStockData(prev => [...prev, ...newItems]);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -110,12 +242,24 @@ const StockManagement = () => {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary-hover">
+          {/* Replace this button with the modal trigger */}
+          <Button
+            size="sm"
+            className="bg-primary text-primary-foreground hover:bg-primary-hover"
+            onClick={() => setModalOpen(true)}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Add Stock Item
           </Button>
         </div>
       </div>
+
+      {/* Modal */}
+      <AddStockModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        onAddItems={handleAddItems}
+      />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
