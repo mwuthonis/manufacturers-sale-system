@@ -1,4 +1,7 @@
-import { useState } from "react"
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { toast } from "@/components/ui/sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,6 +25,7 @@ import {
   Upload,
   AlertTriangle
 } from "lucide-react"
+import jsPDF from "jspdf";
 
 // --- AddStockModal component ---
 function AddStockModal({ open, onOpenChange, onAddItems }) {
@@ -29,6 +33,7 @@ function AddStockModal({ open, onOpenChange, onAddItems }) {
     { itemName: "", category: "", unitPrice: "", quantity: "" }
   ]);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleChange = (idx, field, value) => {
     setItems(items =>
@@ -46,36 +51,63 @@ function AddStockModal({ open, onOpenChange, onAddItems }) {
     setItems(items => items.filter((_, i) => i !== idx));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    // Validate (simple)
+    setError(null);
+
+    // Validate
     const valid = items.every(
       item => item.itemName && item.category && item.unitPrice && item.quantity
     );
     if (!valid) {
+      setError("Please fill all fields for each item.");
       setSubmitting(false);
       return;
     }
-    // Pass new items up
-    onAddItems(
-      items.map(item => ({
-        id: `STK${Math.floor(Math.random() * 100000)}`,
-        name: item.itemName,
+
+    // Prepare payload for backend
+    const payload = items.map(item => ({
+      item_name: item.itemName,
+      category: item.category,
+      unit_price: Number(item.unitPrice),
+      quantity: Number(item.quantity)
+    }));
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.post(
+        "http://localhost:5000/stock",
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` })
+          }
+        }
+      );
+      const created = res.data;
+      const newItems = created.map((item) => ({
+        id: item.id ? `STK${item.id}` : `STK${Math.floor(Math.random() * 100000)}`,
+        name: item.item_name,
         category: item.category,
-        currentStock: Number(item.quantity),
-        minStock: 10,
-        maxStock: 1000,
+        currentStock: item.quantity,
         unit: "unit",
-        unitPrice: Number(item.unitPrice),
+        unitPrice: item.unit_price,
         supplier: "Manual Entry",
-        lastUpdated: new Date().toISOString().slice(0, 10),
+        lastUpdated: item.last_updated ? item.last_updated.slice(0, 10) : new Date().toISOString().slice(0, 10),
         status: "Normal"
-      }))
-    );
-    setItems([{ itemName: "", category: "", unitPrice: "", quantity: "" }]);
-    setSubmitting(false);
-    onOpenChange(false);
+      }));
+      onAddItems(newItems);
+      toast.success("Stock items added successfully!");
+      setItems([{ itemName: "", category: "", unitPrice: "", quantity: "" }]);
+      setSubmitting(false);
+      onOpenChange(false);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to add stock items.");
+      toast.error("Failed to add stock items.");
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -126,6 +158,7 @@ function AddStockModal({ open, onOpenChange, onAddItems }) {
                   size="icon"
                   onClick={() => handleRemoveRow(idx)}
                   className="ml-2"
+                  disabled={submitting}
                 >
                   <Minus className="w-4 h-4" />
                 </Button>
@@ -133,14 +166,15 @@ function AddStockModal({ open, onOpenChange, onAddItems }) {
             </div>
           ))}
           <div>
-            <Button type="button" variant="outline" onClick={handleAddRow}>
+            <Button type="button" variant="outline" onClick={handleAddRow} disabled={submitting}>
               <Plus className="w-4 h-4 mr-2" />
               Add Another Item
             </Button>
           </div>
+          {error && <div className="text-destructive text-sm">{error}</div>}
           <DialogFooter>
             <Button type="submit" disabled={submitting}>
-              Save Items
+              {submitting ? "Saving..." : "Save Items"}
             </Button>
           </DialogFooter>
         </form>
@@ -151,64 +185,52 @@ function AddStockModal({ open, onOpenChange, onAddItems }) {
 // --- End AddStockModal ---
 
 const StockManagement = () => {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [stockData, setStockData] = useState([
-    /*{
-      id: "STK001",
-      name: "Steel Pipes - 2 inch",
-      category: "Raw Materials",
-      currentStock: 150,
-      minStock: 50,
-      maxStock: 500,
-      unit: "pieces",
-      unitPrice: 25.50,
-      supplier: "Steel Corp Ltd",
-      lastUpdated: "2024-01-15",
-      status: "Normal"
-    },
-    {
-      id: "STK002", 
-      name: "Aluminum Sheets - 4x8",
-      category: "Raw Materials",
-      currentStock: 25,
-      minStock: 30,
-      maxStock: 200,
-      unit: "sheets",
-      unitPrice: 85.00,
-      supplier: "Metal Supply Co",
-      lastUpdated: "2024-01-14",
-      status: "Low Stock"
-    },
-    {
-      id: "STK003",
-      name: "Welding Rods - 3.2mm",
-      category: "Consumables",
-      currentStock: 500,
-      minStock: 100,
-      maxStock: 1000,
-      unit: "pieces",
-      unitPrice: 2.25,
-      supplier: "Weld Tech Industries",
-      lastUpdated: "2024-01-16",
-      status: "Normal"
-    },
-    {
-      id: "STK004",
-      name: "Safety Helmets",
-      category: "Safety Equipment",
-      currentStock: 75,
-      minStock: 25,
-      maxStock: 150,
-      unit: "pieces",
-      unitPrice: 15.00,
-      supplier: "Safety First Ltd",
-      lastUpdated: "2024-01-13",
-      status: "Normal"
-    }*/
-  ]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [stockData, setStockData] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const getStatusBadge = (status: string) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Open modal if ?addStock=1 is in the URL
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("addStock") === "1") {
+      setModalOpen(true);
+      // Remove the param from the URL after opening
+      navigate("/stocks", { replace: true });
+    }
+  }, [location.search, navigate]);
+
+  useEffect(() => {
+    const fetchStock = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get("http://localhost:5000/stock", {
+          headers: {
+            ...(token && { Authorization: `Bearer ${token}` })
+          }
+        });
+        const mapped = res.data.map((item) => ({
+          id: `STK${item.id}`,
+          name: item.item_name,
+          category: item.category,
+          currentStock: item.quantity,
+          unit: "unit",
+          unitPrice: item.unit_price,
+          supplier: "Manual Entry",
+          lastUpdated: item.last_updated ? item.last_updated.slice(0, 10) : "",
+          status: item.quantity <= 0 ? "Out of Stock" : item.quantity < 20 ? "Low Stock" : "Normal"
+        }));
+        setStockData(mapped);
+      } catch (err) {
+        // Optionally handle error
+      }
+    };
+    fetchStock();
+  }, []);
+
+  const getStatusBadge = (status) => {
     switch (status) {
       case "Low Stock":
         return <Badge variant="destructive" className="bg-warning text-warning-foreground">Low Stock</Badge>
@@ -225,9 +247,36 @@ const StockManagement = () => {
     item.id.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  // Add new items to stockData
   const handleAddItems = (newItems) => {
     setStockData(prev => [...prev, ...newItems]);
+  };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text("Stock Inventory Report", 14, 16);
+
+    const headers = [
+      ["Item ID", "Name", "Category", "Current Stock ", " Unit Price", "Status"]
+    ];
+
+    const rows = stockData.map(item => [
+      item.id,
+      item.name,
+      item.category,
+      item.currentStock,
+      item.unitPrice,
+      item.status
+    ]);
+
+    let startY = 24;
+    headers.concat(rows).forEach((row, rowIndex) => {
+      row.forEach((cell, i) => {
+        doc.text(String(cell), 14 + i * 32, startY + rowIndex * 8);
+      });
+    });
+
+    doc.save("stock-inventory.pdf");
   };
 
   return (
@@ -238,11 +287,10 @@ const StockManagement = () => {
           <p className="text-muted-foreground">Monitor and manage your inventory levels</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleExportPDF}>
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          {/* Replace this button with the modal trigger */}
           <Button
             size="sm"
             className="bg-primary text-primary-foreground hover:bg-primary-hover"
@@ -254,14 +302,12 @@ const StockManagement = () => {
         </div>
       </div>
 
-      {/* Modal */}
       <AddStockModal
         open={modalOpen}
         onOpenChange={setModalOpen}
         onAddItems={handleAddItems}
       />
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -310,7 +356,6 @@ const StockManagement = () => {
         </Card>
       </div>
 
-      {/* Search and Filters */}
       <Card>
         <CardHeader>
           <CardTitle>Stock Inventory</CardTitle>
@@ -333,7 +378,6 @@ const StockManagement = () => {
             </Button>
           </div>
 
-          {/* Stock Table */}
           <div className="rounded-md border">
             <Table>
               <TableHeader>

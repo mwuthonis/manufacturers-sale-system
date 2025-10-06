@@ -16,9 +16,11 @@ class User(db.Model):
 class Stock(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     item_name = db.Column(db.String(100), nullable=False)
+    category = db.Column(db.String(100), nullable=False)
+    unit_price = db.Column(db.Float, nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
     last_updated = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
-
+    
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     customer_name = db.Column(db.String(100), nullable=False)

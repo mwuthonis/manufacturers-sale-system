@@ -53,7 +53,7 @@ const Dashboard = () => {
 
   const quickActions = [
     { title: "Create New Order", url: "/orders/new", icon: ShoppingCart, color: "primary" },
-    { title: "Add Stock", url: "/stocks/add", icon: Package, color: "success" },
+    { title: "Add Stock", url: "/stocks?addStock=1", icon: Package, color: "success" },
     { title: "Generate Invoice", url: "/invoices/new", icon: FileText, color: "warning" },
     { title: "Record Payment", url: "/payments/new", icon: CreditCard, color: "destructive" }
   ]
