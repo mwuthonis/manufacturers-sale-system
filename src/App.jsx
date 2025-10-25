@@ -11,6 +11,8 @@ import Login from "./pages/Login.jsx";
 import Signup from "./pages/Signup.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
 import NotFound from "./pages/NotFound";
+import InvoiceManagment from "./pages/InvoiceManagement";
+
 
 const queryClient = new QueryClient();
 
@@ -54,9 +56,7 @@ const App = () => (
           } />
           <Route path="/invoices" element={
             <MainLayout>
-              <div className="flex items-center justify-center h-64">
-                <p className="text-muted-foreground">Invoice Management - Coming Soon</p>
-              </div>
+              <InvoiceManagment />
             </MainLayout>
           } />
           <Route path="/payments" element={
