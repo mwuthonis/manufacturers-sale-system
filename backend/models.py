@@ -40,6 +40,16 @@ class Payment(db.Model):
     invoice_id = db.Column(db.Integer, db.ForeignKey('invoice.id'), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     paid_at = db.Column(db.DateTime, server_default=db.func.now())
+    
+    # Add these fields for enhanced functionality
+    payment_method = db.Column(db.String(50))  # Cash, Bank Transfer, etc.
+    status = db.Column(db.String(20), default='Pending')  # Pending, Received, Failed
+    reference = db.Column(db.String(100))  # Transaction reference
+    notes = db.Column(db.Text)  # Additional notes
+    receipt_path = db.Column(db.String(200))  # Path to uploaded receipt file
+    
+    # Relationship
+    invoice = db.relationship('Invoice', backref='payments')
 
 class Receipt(db.Model):
     id = db.Column(db.Integer, primary_key=True)

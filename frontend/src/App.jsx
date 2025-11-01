@@ -12,7 +12,8 @@ import Signup from "./pages/Signup.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
 import NotFound from "./pages/NotFound";
 import InvoiceManagment from "./pages/InvoiceManagement";
-
+import PaymentRecording from "./pages/PaymentRecording";
+import DeliveryNotes from "./pages/DeliveryNotes";
 
 const queryClient = new QueryClient();
 
@@ -61,9 +62,7 @@ const App = () => (
           } />
           <Route path="/payments" element={
             <MainLayout>
-              <div className="flex items-center justify-center h-64">
-                <p className="text-muted-foreground">Payment Recording - Coming Soon</p>
-              </div>
+              <PaymentRecording />
             </MainLayout>
           } />
           <Route path="/receipts" element={
@@ -75,9 +74,7 @@ const App = () => (
           } />
           <Route path="/delivery-notes" element={
             <MainLayout>
-              <div className="flex items-center justify-center h-64">
-                <p className="text-muted-foreground">Delivery Notes - Coming Soon</p>
-              </div>
+              <DeliveryNotes />
             </MainLayout>
           } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

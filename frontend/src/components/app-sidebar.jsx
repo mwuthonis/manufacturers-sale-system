@@ -45,7 +45,9 @@ export function AppSidebar() {
 
   const isActive = (path) => currentPath === path
   const getNavCls = ({ isActive }) =>
-    isActive ? "bg-primary text-primary-foreground hover:bg-primary/90" : "hover:bg-accent"
+    isActive
+   ? "bg-primary text-primary-foreground hover:bg-primary/90"
+    : "text-[hsl(var(--sidebar-foreground))] hover:bg-accent hover:text-[hsl(var(--sidebar-foreground))]";
 
   const handleLogout = async () => {
     const token = localStorage.getItem("token")
@@ -93,7 +95,7 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} end className={getNavCls}>
                       <item.icon className="h-4 w-4" />
-                      {!isCollapsed && <span>{item.title}</span>}
+                      {!isCollapsed && <span style={{color: "black"}}>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

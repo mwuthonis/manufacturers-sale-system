@@ -5,7 +5,7 @@ in the project path:
 - source venv/Scripts/activate
 set the variables 
 - $env:FLASK_ENV = "development"
-- $env:FLASK_APP = "backend.app"
+- $env:FLASK_APP = "backend.app"~
 - $env:PYTHONPATH = "."
 then 
 flask run

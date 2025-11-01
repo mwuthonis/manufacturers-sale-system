@@ -1,17 +1,23 @@
 from flask import Flask
 from flask_restful import Api
 from flask_cors import CORS
-from flask_migrate import Migrate  # Fix import
+from flask_migrate import Migrate 
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
+import os
 
 db = SQLAlchemy()
 jwt = JWTManager()
 
 def create_app():
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///manufacture.db'
+
+    basedir = os.path.abspath(os.path.dirname(__file__))  # This gets the backend folder path
+    database_path = os.path.join(basedir, 'instances', 'manufacture.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{database_path}'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['JWT_SECRET_KEY'] = 'your-secret-key'
+
     db.init_app(app)
     jwt.init_app(app)
     CORS(app)
@@ -23,7 +29,7 @@ def create_app():
     from backend.resources.stock import StockResource
     from backend.resources.order import OrderResource
     from backend.resources.invoice import InvoiceResource
-    from backend.resources.payment import PaymentResource
+    from backend.resources.payment import PaymentResource, PaymentUploadResource
     from backend.resources.receipt import ReceiptResource
     from backend.resources.delivery_note import DeliveryNoteResource
 
@@ -35,7 +41,8 @@ def create_app():
     api.add_resource(StockResource, '/stock', '/stock/<int:id>')
     api.add_resource(OrderResource, '/orders', '/orders/<int:id>')
     api.add_resource(InvoiceResource, '/invoices', '/invoices/<int:id>')
-    api.add_resource(PaymentResource, '/payments', '/payments/<int:id>')
+    api.add_resource(PaymentResource, '/api/payments', '/api/payments/<int:id>')
+    api.add_resource(PaymentUploadResource, '/api/payments/upload')
     api.add_resource(ReceiptResource, '/receipts', '/receipts/<int:id>')
     api.add_resource(DeliveryNoteResource, '/delivery-notes', '/delivery-notes/<int:id>')
 
@@ -46,5 +53,6 @@ if __name__ == "__main__":
     with app.app_context():
         from backend.models import User, Stock, Order, Invoice, Payment, Receipt, DeliveryNote
         # Create all tables
+        db.init_app(app)
         db.create_all()
     app.run(debug=True)
