@@ -1,6 +1,0 @@
-Flask
-Flask-RESTful
-Flask-Migrate
-Flask-SQLAlchemy
-Flask-JWT-Extended
-Werkzeug
