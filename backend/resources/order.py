@@ -1,7 +1,7 @@
 from flask_restful import Resource, reqparse
-from backend.models import Order
-from backend.app import db
-from backend.resources.auth import role_required
+from models import Order
+from app import db
+from resources.auth import role_required
 
 class OrderResource(Resource):
     @role_required(['Admin', 'Sales'])

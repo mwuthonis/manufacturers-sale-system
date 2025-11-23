@@ -1,8 +1,8 @@
 from flask_restful import Resource, reqparse
-from backend.models import Receipt, Payment
-from backend.app import db
-from backend.resources.auth import role_required
-from backend.utils.pdf import generate_receipt_pdf
+from models import Receipt, Payment
+from app import db
+from resources.auth import role_required
+from utils.pdf import generate_receipt_pdf
 
 class ReceiptResource(Resource):
     @role_required(['Admin', 'Sales'])

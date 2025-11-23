@@ -1,8 +1,8 @@
 from flask_restful import Resource, reqparse
-from ..models import DeliveryNote, Order
-from ..app import db
-from .auth import role_required
-from ..utils.pdf import generate_delivery_note_pdf
+from models import DeliveryNote, Order
+from app import db
+from resources.auth import role_required
+from utils.pdf import generate_delivery_note_pdf
 
 class DeliveryNoteResource(Resource):
     @role_required(['Admin', 'Warehouse'])

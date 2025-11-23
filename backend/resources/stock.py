@@ -1,15 +1,15 @@
 from flask_restful import Resource, reqparse
 from flask import request
-from backend.models import Stock
-from backend.app import db
-from backend.resources.auth import role_required
+from models import Stock
+from app import db
+from resources.auth import role_required
 
 class StockResource(Resource):
     @role_required(['Admin','Sales', 'Warehouse'])
     def get(self, id=None):
         if id:
             stock = Stock.query.get(id)
-            if not stock:
+            if not stock:+
                 return {'message': 'Not found'}, 404
             return {
                 'id': stock.id,

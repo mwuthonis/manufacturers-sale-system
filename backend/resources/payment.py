@@ -2,9 +2,9 @@ from flask_restful import Resource, reqparse
 from flask import request
 import os
 from werkzeug.utils import secure_filename
-from backend.models import Payment, Invoice
-from backend.app import db
-from backend.resources.auth import role_required
+from models import Payment, Invoice
+from app import db
+from resources.auth import role_required
 
 class PaymentResource(Resource):
     @role_required(['Admin', 'Sales'])
