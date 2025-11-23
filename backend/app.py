@@ -11,10 +11,17 @@ jwt = JWTManager()
 
 def create_app():
     app = Flask(__name__)
-
-    basedir = os.path.abspath(os.path.dirname(__file__))  # This gets the backend folder path
-    database_path = os.path.join(basedir, 'instances', 'manufacture.db')
-    app.config['SQLALCHEMY_DATABASE_URL'] = f'sqlite:///{database_path}'
+    
+    db_url = os.environ.get('DATABASE_URL')
+    if db_url:
+        # Railway provides DATABASE_URL for PostgreSQL, but SQLAlchemy expects 'postgresql://' not 'postgres://'
+        if db_url.startswith("postgres://"):
+            db_url = db_url.replace("postgres://", "postgresql://", 1)
+        app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+    else:
+        basedir = os.path.abspath(os.path.dirname(__file__))  # This gets the backend folder path
+        database_path = os.path.join(basedir, 'instances', 'manufacture.db')
+        app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{database_path}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['JWT_SECRET_KEY'] = 'your-secret-key'
 
