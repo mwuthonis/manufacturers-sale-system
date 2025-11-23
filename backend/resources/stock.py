@@ -9,7 +9,7 @@ class StockResource(Resource):
     def get(self, id=None):
         if id:
             stock = Stock.query.get(id)
-            if not stock:+
+            if not stock:
                 return {'message': 'Not found'}, 404
             return {
                 'id': stock.id,
