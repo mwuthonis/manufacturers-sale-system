@@ -14,7 +14,7 @@ def create_app():
 
     basedir = os.path.abspath(os.path.dirname(__file__))  # This gets the backend folder path
     database_path = os.path.join(basedir, 'instances', 'manufacture.db')
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{database_path}'
+    app.config['SQLALCHEMY_DATABASE_URL'] = f'sqlite:///{database_path}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['JWT_SECRET_KEY'] = 'your-secret-key'
 
